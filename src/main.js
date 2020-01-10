@@ -7,13 +7,8 @@ import '@/assets/css/global.css'
 
 // 导入elementui模块
 import ElementUI from 'element-ui'
-
-// 导入axios模块
-import axios from 'axios'
-// 配置公共根地址(线上地址)
-axios.defaults.baseURL = 'http://ttapi.research.itcast.cn/'
-// 配置为Vue的继承成员
-Vue.prototype.$http = axios
+// 导入axios相关ax.js代码
+import '@/utils/ax.js'
 
 // 注册全部的组件和事件方法
 Vue.use(ElementUI)

@@ -7,14 +7,27 @@ import Home from '@/views/home'
 Vue.use(VueRouter)
 
 const routes = [
-// import 使用:import xxx from xx; 模块化导入(完整导入)
-// import (xx)函数调用 按需导入    @符号代表src目录的绝对路径地址
-// name属性作用:编程时导航可以利用
-// path: '/login',name: 'login',component: function({return import('@/views/login')})
-//   { path: '/login', name: 'login', component: () => import('@/views/login/index.vue') },
+  // import 使用:import xxx from xx; 模块化导入(完整导入)
+  // import (xx)函数调用 按需导入    @符号代表src目录的绝对路径地址
+  // name属性作用:编程时导航可以利用
+  // path: '/login',name: 'login',component: function({return import('@/views/login')})
+  //   { path: '/login', name: 'login', component: () => import('@/views/login/index.vue') },
   // index.vue是默认索引文件,不用写也行
   { path: '/login', name: 'login', component: Login },
-  { path: '/home', name: 'home', component: Home }
+  // { path: '/home', name: 'home', component: Home }
+  {
+    path: '/home',
+    name: 'home',
+    component: Home,
+    redirect: 'welcome', // redirect路由重定向
+    children: [
+      // 子路由配置  要给welcome创建为home的子级路由(路由嵌套)
+      // import函数需要相关路由依赖包
+      { path: '/welcome', name: 'welcome', component: () => import('@/views/welcome') },
+      { path: '/article', nema: 'article', component: () => import('@/views/article') }
+
+    ]
+  }
 ]
 
 const router = new VueRouter({
