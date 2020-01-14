@@ -20,13 +20,14 @@
             <!-- label：用于设置当前单选按钮的value值情况 -->
           </el-form-item>
           <el-form-item label="频道列表">
-            <el-select v-model="searchForm.channel_id" placeholder="请选择" clearable>
+            <channel @slt="selectHandler"></channel>
+            <!-- <el-select v-model="searchForm.channel_id" placeholder="请选择" clearable>
               <el-option
                 v-for="item in channelList"
                 :key="item.id"
                 :label="item.name"
                 :value="item.id"
-              ></el-option>
+              ></el-option> -->
               <!-- <el-option label="html5" value="101"></el-option>
               <el-option label="css3" value="102"></el-option>
               <el-option label="JS高级" value="103"></el-option>-->
@@ -34,7 +35,7 @@
                     2. clearable：可以清除选中的项目
                  3. label  设置每个项目对外提示的名称
               4. value 设置每个项目真实起作用的value值-->
-            </el-select>
+            <!-- </el-select> -->
           </el-form-item>
           <el-form-item label="时间选择">
             <el-date-picker
@@ -82,15 +83,21 @@
         </el-table-column>
         <el-table-column label="发布时间" prop="pubdate"></el-table-column>
         <el-table-column label="操作">
-          <el-button type="primary" size="mini" icon="el-icon-edit">修改</el-button>
-          <el-button type="danger" size="mini" icon="el-icon-delete">已删除</el-button>
-          <!-- 修改.删除不属于数据部分,是普通的按钮可以不用设置prop,对应的内容可以通过el-tabel-column标签"内容区域"体现  size:medium/small/mini-->
+          <template slot-scope="stData">
+            <el-button
+              type="primary"
+              size="mini"
+              icon="el-icon-edit"
+              @click="$router.push('/articleedit/'+stData.row.id)"
+              >修改</el-button>
+            <el-button type="danger" size="mini" icon="el-icon-delete" @click="del(stData.row.id)">删除</el-button>
+          </template>
         </el-table-column>
       </el-table>
       <!-- 分页原理 -->
       <!-- select * from article limit 偏移量,长度偏移量=(当前页码-1)*每页条数
            select * from article limit 0,7  // 获得第1页数据
-           select * from article limit 7,7  // 获得第2页数据-->
+      select * from article limit 7,7  // 获得第2页数据-->
       <!-- 分页效果 -->
       <el-pagination
         @size-change="handleSizeChange"
@@ -115,13 +122,19 @@
 </template>
 
 <script>
+import Channel from '@/components/channel.vue'
 export default {
   name: 'ArticleList', // name属性值是为了通过devtools调式工具进行精准查找
+  components: {
+    Channel // 注册频道独立组件
+  },
+
   // 监听器设置
   watch: {
-    searchForm: {// 对sarchform做深度监听
+    searchForm: {
+      // 对sarchform做深度监听
       handler: function (newV, oldV) {
-        console.log(newV)// 根据变化后的各个筛选条件重新获得文章列表
+        console.log(newV) // 根据变化后的各个筛选条件重新获得文章列表
         this.getArticleList()
       },
       deep: true
@@ -145,7 +158,7 @@ export default {
     return {
       articleList: [], // 文章列表
       tot: 0, // 文章总条数
-      channelList: [], // 真实频道列表成员
+      // channelList: [], // 真实频道列表成员
       timetotime: '', // 临时接收时间范围信息成员
       // 搜索表单数对象
       searchForm: {
@@ -159,19 +172,54 @@ export default {
     }
   },
   created () {
-    this.getChannelList() // 获得频道信息  在created中调用getchannellist()方法
+    // this.getChannelList() // 获得频道信息  在created中调用getchannellist()方法
     this.getArticleList() // 获得文章信息
   },
   methods: {
+    // 声明事件方法，用于接收子组件channel传递过来的频道id
+    // id:频道子组件传递过来的选中的频道id
+    selectHandler (id) {
+      // 把id赋值给addForm.channel_id
+      this.searchForm.channel_id = id
+    },
+    // 删除文章
+    del (id) {
+      // 确认事情
+      this.$confirm('确认要删除该文章么?', '删除', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // axios请求服务器端实现删除
+        let pro = this.$http({
+          url: '/mp/v1_0/articles/' + id,
+          method: 'delete'
+        })
+        pro
+          .then(result => {
+            // 删除成功
+            // console.log(result)  // 返回空的data数据
+            // 直接页面刷新即可
+            this.getArticleList()
+          })
+          .catch(err => {
+            return this.$message.error('删除文章失败：' + err)
+          })
+      }).catch(() => {
+      })
+    },
+
     // 分页相关
-    handleSizeChange (val) { // 每条条数变化的回调处理
-      console.log(val)// val变化后的每页条数
-      this.searchForm.per_page = val// 更新每页条数
+    handleSizeChange (val) {
+      // 每条条数变化的回调处理
+      console.log(val) // val变化后的每页条数
+      this.searchForm.per_page = val // 更新每页条数
       // this.getArticleList()// 根据变化后的每页条数重新获得文章列表
     },
-    handleCurrentChange (val) { // 页码变化的回调处理
-      console.log(val)// val变化后的页码
-      this.searchForm.page = val// 更新页码
+    handleCurrentChange (val) {
+      // 页码变化的回调处理
+      console.log(val) // val变化后的页码
+      this.searchForm.page = val // 更新页码
       // this.getArticleList()// 根据变化后页码重新获得文章列表
       // 深度监听器代替做好了回调方法
     },
@@ -179,9 +227,10 @@ export default {
     getArticleList () {
       // 把searchForm内部为空的成员都过滤掉
       let searchData = {}
-      for (var i in this.searchForm) { // i代表对象的成员属性名称,status,channel_id,begin_pudate等
+      for (var i in this.searchForm) {
+        // i代表对象的成员属性名称,status,channel_id,begin_pudate等
         if (this.searchForm[i] || this.searchForm[i] === 0) {
-          searchData[i] = this.searchForm[i]// 成员值非空
+          searchData[i] = this.searchForm[i] // 成员值非空
         }
       }
       let pro = this.$http({
@@ -200,24 +249,24 @@ export default {
         .catch(err => {
           return this.$message.error('获得文章失败：' + err)
         })
-    },
-    // 获得真实频道数据
-    getChannelList () {
-      // getchannellist方法将axios获取的数据赋予channellist里边
-      let pro = this.$http({
-        url: '/mp/v1_0/channels',
-        method: 'get'
-      })
-      pro
-        .then(result => {
-          console.log(result)
-          //   data接收频道数据
-          this.channelList = result.data.data.channels
-        })
-        .catch(err => {
-          return this.$message.error('获得频道失败:' + err)
-        })
     }
+    // // 获得真实频道数据
+    // getChannelList () {
+    //   // getchannellist方法将axios获取的数据赋予channellist里边
+    //   let pro = this.$http({
+    //     url: '/mp/v1_0/channels',
+    //     method: 'get'
+    //   })
+    //   pro
+    //     .then(result => {
+    //       console.log(result)
+    //       //   data接收频道数据
+    //       this.channelList = result.data.data.channels
+    //     })
+    //     .catch(err => {
+    //       return this.$message.error('获得频道失败:' + err)
+    //     })
+    // }
   }
 }
 </script>
@@ -227,7 +276,7 @@ export default {
 .box-card {
   margin-bottom: 15px;
 }
-.el-pagination{
-  margin-top: 15px
+.el-pagination {
+  margin-top: 15px;
 }
 </style>

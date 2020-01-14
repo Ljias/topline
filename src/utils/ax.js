@@ -8,6 +8,8 @@ import axios from 'axios'
 
 // 引入路由
 import router from '@/router'
+import JSONbig from 'json-bigint'
+
 // 配置公共根地址(线上地址)
 axios.defaults.baseURL = 'http://ttapi.research.itcast.cn/'
 // 配置为Vue的继承成员
@@ -39,10 +41,23 @@ axios.interceptors.response.use(function (response) {
   if (error.response.status === 401) {
     // token不ok,失效 强制用户重新登录以刷新服务器端的token时效
     router.push('/login')
-    return new Promise(function () { })// 空的promise对象,没有机会执行catch,不要做错误提示
+    return new Promise(function () { })// 空的promise对象,没有机会执行catch,不用做错误提示
   }
+  // 以下错误提示
   // return new Promise((resolve, reject) => {
   // reject('获取文章失败123')
   // })
   return Promise.reject(error)
 })
+
+// 服务器端返回，数据转换器，应用
+axios.defaults.transformResponse = [function (data) {
+  // data的返回形式有两种
+  // 1. 实体字符串
+  // 2. 空字符串(不能转的)
+  // JSONbig.parse针对大整型进行处理，其他信息不给处理
+  if (data) {
+    return JSONbig.parse(data)
+  }
+  return data
+}]

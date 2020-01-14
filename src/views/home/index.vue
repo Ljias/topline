@@ -6,28 +6,28 @@
         :collapse="isCollapse" :collapse-transition="false" router>
         <!-- collapse控制折叠展开  collapse-transition禁用折叠动画  router配置左侧导航菜单的激活路由 -->
           <!-- 菜单背景色,文字色,子菜单选中的颜色 -->
-          <el-menu-item index="1" style="width:200px;">
+          <el-menu-item index="/welcome" :style="{ width: isCollapse?'65px':'200px' }">
             <!-- menu-item表示么有子级菜单 -->
             <i class="el-icon-location"></i>
             <span slot="title">首页</span>
           </el-menu-item>
-          <el-submenu index="2" style="width:200px;">
+          <el-submenu index="2" :style="{ width: isCollapse?'65px':'200px' }">
             <!-- submenu表示当前菜单拥有的子级菜单 -->
             <template slot="title">
               <i class="el-icon-menu"></i>
               <span>内容管理</span>
             </template>
-            <el-menu-item index="2-1">发布文章</el-menu-item>
+            <el-menu-item index="/articleadd">发布文章</el-menu-item>
             <el-menu-item index="/article">文章列表</el-menu-item>
             <!--article 配置路由地址信息 -->
             <el-menu-item index="2-3">评论列表</el-menu-item>
-            <el-menu-item index="2-4">素材管理</el-menu-item>
+            <el-menu-item index="/material">素材管理</el-menu-item>
           </el-submenu>
-          <el-menu-item index="3" style="width:200px;">
+          <el-menu-item index="/fans" :style="{ width: isCollapse?'65px':'200px' }">
             <i class="el-icon-location"></i>
             <span slot="title">粉丝管理</span>
           </el-menu-item>
-          <el-menu-item index="4" style="width:200px;">
+          <el-menu-item index="/account" :style="{width:isCollapse?'65px':'200px'}">
             <i class="el-icon-location"></i>
             <span slot="title">账户管理</span>
           </el-menu-item>
@@ -72,21 +72,43 @@
 </template>
 
 <script>
+import bus from '@/utils/bus.js'// 导入公共bus的vue对象
+
 export default {
   // 计算属性应用
   computed: {
+
     // 获得账户名称
-    name: function () {
-      return JSON.parse(window.sessionStorage.getItem('userinfo')).name
+    name: function () { // 添加this.tmpname判断临时成员存在即用 ||
+      return this.tmpname || JSON.parse(window.sessionStorage.getItem('userinfo')).name
     }, // 获得账户头像
     photo: function () {
-      return JSON.parse(window.sessionStorage.getItem('userinfo')).photo
+      return this.tmpphoto || JSON.parse(window.sessionStorage.getItem('userinfo')).photo
     }
   },
   data () {
     return {
+      tmpname: '', // 临时账户名称  接收更新的账户信息 模拟响应式同步更新
+      tmpphoto: '', // 临时账户头像
       isCollapse: false// false展开  true折叠  isCollapse控制菜单折叠展开
     }
+  },
+  created () {
+    // 更新名称   通过$on声明事件方法upaccountname和upaccountphoto 让account的bus来调用进行数据更新
+    bus.$on('upAccountName', nm => {
+      console.log(nm)
+      this.tmpname = nm// 把nm赋值给临时成员tmpname
+      let userinfo = JSON.parse(window.sessionStorage.getItem('userinfo'))// nm对sessionstorage数据做更新
+      userinfo.name = nm// 对userinofo对象的单个项目做更新
+      window.sessionStorage.setItem('userinfo', JSON.stringify(userinfo))// 把更新好的userinfo再回传存储到sessionstorage里边
+    })
+    // 更新头像
+    bus.$on('upAccountPhoto', ph => {
+      this.tmpphoto = ph// 把ph赋值给临时成员tmpphoto
+      let userinfo = JSON.parse(window.sessionStorage.getItem('userinfo'))// nm对sessionstorage数据做更新
+      userinfo.name = ph// 对userinofo对象的单个项目做更新
+      window.sessionStorage.setItem('userinfo', JSON.stringify(userinfo))// 把更新好的userinfo再回传存储到sessionstorage里边
+    })
   },
   methods: {
     // 退出系统方法
